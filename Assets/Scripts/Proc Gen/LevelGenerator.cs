@@ -3,14 +3,25 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-    [SerializeField] GameObject chunkPrefab;
+    [SerializeField] ScoreManager scoreManager;
+    [Header("References")]
+    [SerializeField] CameraController cameraController;
+    [SerializeField] GameObject[] chunkPrefabs;
     [SerializeField] Transform chunkParent;
+    [SerializeField] GameObject checkPointChunk;
+
+    [Header("Level Settings")]
     [SerializeField] float chunkLength = 10f;
     [SerializeField] int startingChunksAmount = 10;
     [SerializeField] float scrollSpeed = 8f;
+    [SerializeField] float minScrollSpeed = 3f;
+    [SerializeField] float maxScrollSpeed = 20f;
+    [SerializeField] float minGravityZ = -22f;
+    [SerializeField] float maxGravityZ = -2f;
     [SerializeField] Transform player;
 
     List<GameObject> chunks = new List<GameObject>();
+    int spawnedChunkCount = 0;
     private void Start()
     {
         SpawnStartingChunks();
@@ -19,6 +30,16 @@ public class LevelGenerator : MonoBehaviour
     private void Update()
     {
         MoveChunks();            
+    }
+    public void ChangeScrollSpeed(float speed)
+    {
+        float newScrollSpeed = scrollSpeed + speed;
+        scrollSpeed = Mathf.Clamp(newScrollSpeed , minScrollSpeed, maxScrollSpeed);
+        float newGravityZ = Physics.gravity.z - speed;
+        newGravityZ = Mathf.Clamp(newGravityZ , minGravityZ, maxGravityZ);  
+
+        Physics.gravity = new Vector3(Physics.gravity.x , Physics.gravity.y , newGravityZ);
+        cameraController.ChangeCameraFOV(speed);
     }
 
     private void SpawnStartingChunks()
@@ -31,9 +52,20 @@ public class LevelGenerator : MonoBehaviour
 
     private void SpawnChunk()
     {
+        spawnedChunkCount++;
+        
         float spawnPositionZ = GetSpawnPosZ();
         Vector3 chunkPos = new Vector3(transform.position.x, transform.position.y, spawnPositionZ);
-        GameObject newChunk = Instantiate(chunkPrefab, chunkPos, Quaternion.identity, chunkParent);
+        
+        GameObject chunkToSpawn = chunkPrefabs[Random.Range(0 , chunkPrefabs.Length)];
+        if(spawnedChunkCount % 8 == 0 && spawnedChunkCount != 0)
+        {
+            chunkToSpawn = checkPointChunk;            
+        }
+
+        GameObject newChunk = Instantiate(chunkToSpawn, chunkPos, Quaternion.identity, chunkParent);
+        newChunk.GetComponent<Chunk>().Init(this , scoreManager);
+        
         chunks.Add(newChunk);
     }
 

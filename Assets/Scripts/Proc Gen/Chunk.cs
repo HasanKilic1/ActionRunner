@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,6 +12,14 @@ public class Chunk : MonoBehaviour
     [SerializeField] float[] lanes = { -2.5f, 0f, 3.7f };
     List<int> availableLaneIndexes = new List<int> { 0, 1, 2 };
     
+    LevelGenerator levelGenerator;
+    ScoreManager scoreManager;
+    public void Init(LevelGenerator levelGenerator , ScoreManager scoreManager)
+    {
+        this.levelGenerator = levelGenerator;
+        this.scoreManager = scoreManager;
+    }
+
     private void Start()
     {
         SpawnFences();
@@ -41,7 +48,8 @@ public class Chunk : MonoBehaviour
 
         int selectedLaneIndex = SelectLane();
         Vector3 spawnPosition = new Vector3(lanes[selectedLaneIndex], transform.position.y, transform.position.z);
-        Instantiate(applePrefab, spawnPosition, Quaternion.identity, transform);
+        Apple apple = Instantiate(applePrefab, spawnPosition, Quaternion.identity, transform).GetComponent<Apple>();
+        apple.Init(levelGenerator);
     }
 
     void SpawnCoins()
@@ -58,7 +66,8 @@ public class Chunk : MonoBehaviour
         {
             float spawnPosZ = topOfChunkZPos - i * coinSeparationLength;
             Vector3 spawnPosition = new Vector3(lanes[selectedLaneIndex], transform.position.y, spawnPosZ);
-            Instantiate(coinPrefab, spawnPosition, Quaternion.identity, transform);
+            Coin coin = Instantiate(coinPrefab, spawnPosition, Quaternion.identity, transform).GetComponent<Coin>();
+            coin.Init(scoreManager);
         }
     }
 
